@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#05070d">
+<meta name="mobile-web-app-capable" content="yes">
+<title>DARWIN — Siri Style Assistant</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#05070d;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+body{display:flex;align-items:center;justify-content:center}.app{position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 47%,rgba(85,110,255,.18),transparent 24%),radial-gradient(circle at 50% 100%,rgba(0,200,255,.10),transparent 38%),#05070d}
+.top{position:absolute;top:max(24px,env(safe-area-inset-top));left:0;right:0;text-align:center;letter-spacing:.18em;font-size:12px;color:#8994aa}.name{font-size:25px;font-weight:700;letter-spacing:.28em;margin-left:.28em}.status{margin-top:8px;letter-spacing:.04em;color:#657087;font-size:12px}
+.orb{width:min(230px,55vw);height:min(230px,55vw);border-radius:50%;position:relative;display:grid;place-items:center;cursor:pointer}.orb:before,.orb:after{content:"";position:absolute;border-radius:50%;inset:0}.orb:before{background:conic-gradient(from 0deg,#6d7cff,#8e5cff,#27d7ff,#5b7cff,#6d7cff);filter:blur(15px);opacity:.75;animation:spin 5s linear infinite}.orb:after{inset:8%;background:radial-gradient(circle at 40% 32%,#202b55,#0b1020 52%,#05070d);border:1px solid rgba(255,255,255,.12);box-shadow:inset 0 0 50px rgba(90,120,255,.25),0 0 70px rgba(70,100,255,.25)}.orb.active:before{animation:spin 1.2s linear infinite;filter:blur(20px);opacity:1}
+.bars{position:relative;z-index:2;display:flex;gap:5px;align-items:center;height:50px}.bar{width:5px;height:18px;border-radius:9px;background:#dce6ff;opacity:.8;animation:pulse 1s ease-in-out infinite}.bar:nth-child(2){animation-delay:.12s}.bar:nth-child(3){animation-delay:.24s}.bar:nth-child(4){animation-delay:.36s}.bar:nth-child(5){animation-delay:.48s}
+.prompt{margin-top:38px;text-align:center;font-size:20px;font-weight:500;min-height:30px;padding:0 24px}.hint{margin-top:12px;color:#717c92;font-size:13px;text-align:center}.actions{position:absolute;bottom:max(32px,env(safe-area-inset-bottom));display:flex;gap:12px}button{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.055);color:#dfe6f7;border-radius:999px;padding:12px 18px;font-size:13px;cursor:pointer;backdrop-filter:blur(15px)}
+@keyframes spin{to{transform:rotate(360deg)}}@keyframes pulse{0%,100%{height:12px;opacity:.45}50%{height:40px;opacity:1}}
+@media(max-width:500px){.orb{width:210px;height:210px}.prompt{font-size:18px}}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="top"><div class="name">DARWIN</div><div class="status" id="status">READY</div></div>
+<div class="orb" id="orb" aria-label="Tap to speak"><div class="bars"><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i><i class="bar"></i></div></div>
+<div class="prompt" id="prompt">Tap the orb and talk to DARWIN</div>
+<div class="hint">Siri-style voice interface • Chrome compatible</div>
+<div class="actions"><button id="speak">🎙 Speak</button><button onclick="location.href='DARWIN_Assistant.html'">Open full assistant</button></div>
+</div>
+<script>
+const orb=document.getElementById('orb'),statusEl=document.getElementById('status'),promptEl=document.getElementById('prompt'),speakBtn=document.getElementById('speak');
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let listening=false,rec=null;
+function say(text){if(!('speechSynthesis'in window))return;speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(text);u.rate=.96;u.pitch=1.02;speechSynthesis.speak(u)}
+function start(){if(!SR){promptEl.textContent='Voice input is not supported in this browser.';statusEl.textContent='BROWSER LIMIT';return}if(listening)return;rec=new SR();rec.lang=navigator.language||'en-IN';rec.interimResults=false;rec.continuous=false;
+rec.onstart=()=>{listening=true;orb.classList.add('active');statusEl.textContent='LISTENING';promptEl.textContent='I’m listening…'};
+rec.onerror=()=>{listening=false;orb.classList.remove('active');statusEl.textContent='READY';promptEl.textContent='I couldn’t hear that. Tap and try again.'};
+rec.onend=()=>{listening=false;orb.classList.remove('active');if(statusEl.textContent==='LISTENING')statusEl.textContent='READY'};
+rec.onresult=e=>{let text=e.results[0][0].transcript.trim();promptEl.textContent='“'+text+'”';statusEl.textContent='THINKING';handle(text)};rec.start()}
+function handle(text){let t=text.toLowerCase();
+if(t.includes('youtube')){say('Opening YouTube');setTimeout(()=>location.href='https://www.youtube.com',300);return}
+if(t.includes('google maps')||t.includes('maps')){say('Opening Maps');setTimeout(()=>location.href='https://maps.google.com',300);return}
+if(t.includes('whatsapp')){say('Opening WhatsApp');setTimeout(()=>location.href='https://web.whatsapp.com',300);return}
+if(t.includes('time')){say('The current time is '+new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}));statusEl.textContent='READY';return}
+if(t.includes('hello')||t.includes('hi')||t.includes('hey')){say('Hello. I am DARWIN. How can I help?');statusEl.textContent='READY';return}
+say('I heard '+text+'. For more commands, open the full DARWIN assistant.');statusEl.textContent='READY'}
+orb.onclick=start;speakBtn.onclick=start;
+</script>
+</body>
+</html>
